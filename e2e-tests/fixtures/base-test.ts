@@ -1,4 +1,4 @@
-import { BrowserContext, test as base } from '@playwright/test'
+import { test as base } from '@playwright/test'
 import { ApiClients, createApiClients } from '@@e2e-tests/api-client/create-api-clients'
 import { API_URL } from '@@e2e-tests/utils/env'
 import { addSessionCookie, Credentials } from '@@e2e-tests/utils/auth'
@@ -6,12 +6,10 @@ import { logger, Logger } from '@@e2e-tests/utils/logger'
 
 export * from '@playwright/test'
 
-type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
-
 const DEFAULT_ACCOUNT: Credentials = { username: '', password: '' }
 
 interface TestOptions {
-  /** Account used by authenticated tests. Override per describe with test.use(). */
+  /** Account used by authenticated tests and by `authToken`. Override per describe with test.use(). */
   account: Credentials
   /** When true, each test's context starts logged in as `account`. Set per describe with test.use(). */
   authenticated: boolean
@@ -19,6 +17,8 @@ interface TestOptions {
 
 interface TestFixtures {
   log: Logger
+  /** Session token for this project's copy of `account`, for API tests that need a logged-in user. */
+  authToken: string
 }
 
 interface WorkerFixtures {
@@ -28,8 +28,11 @@ interface WorkerFixtures {
    * so projects never share a session or cart and can run in parallel.
    */
   toProjectAccount: (account: Credentials) => Credentials
-  /** Logged-in storage states keyed by username. Lives for one worker, so a failed test's new worker logs in again. */
-  sessionStates: Map<string, StorageState>
+  /**
+   * Returns a session token for the account, logging in once per worker and reusing it afterwards.
+   * Lives for one worker, so a failed test's new worker logs in again.
+   */
+  getSessionToken: (account: Credentials) => Promise<string>
 }
 
 export const test = base.extend<TestOptions & TestFixtures, WorkerFixtures>({
@@ -40,46 +43,37 @@ export const test = base.extend<TestOptions & TestFixtures, WorkerFixtures>({
     await use(logger)
   },
 
-  storageState: async (
-    {
-      storageState,
-      authenticated,
-      account: baseAccount,
-      toProjectAccount,
-      api,
-      browser,
-      baseURL,
-      sessionStates,
-    },
-    use,
-  ) => {
-    if (!authenticated) {
-      await use(storageState)
-      return
-    }
-
-    const account = toProjectAccount(baseAccount)
-    let state = sessionStates.get(account.username)
-    if (state) {
-      logger.step(`Reuse session of ${account.username}`)
-    } else {
-      // BlazeDemo may reset its data, so signup, check exists before logging in.
-      await api.auth.signup(account)
-      const token = await api.auth.login(account)
-      const context = await browser.newContext()
-      await addSessionCookie({ context, baseURL: baseURL!, token })
-      state = await context.storageState()
-      await context.close()
-      sessionStates.set(account.username, state)
-      logger.step(`Log in via API as ${account.username} successfully`)
-    }
-
-    await use(state)
+  authToken: async ({ account, toProjectAccount, getSessionToken }, use) => {
+    await use(await getSessionToken(toProjectAccount(account)))
   },
 
-  sessionStates: [
-    async ({}, use) => {
-      await use(new Map())
+  context: async (
+    { context, authenticated, account, toProjectAccount, getSessionToken, baseURL },
+    use,
+  ) => {
+    if (authenticated) {
+      const token = await getSessionToken(toProjectAccount(account))
+      await addSessionCookie({ context, baseURL: baseURL!, token })
+    }
+    await use(context)
+  },
+
+  getSessionToken: [
+    async ({ api }, use) => {
+      const tokens = new Map<string, string>()
+      await use(async (account) => {
+        const cached = tokens.get(account.username)
+        if (cached) {
+          logger.step(`Reuse session of ${account.username}`)
+          return cached
+        }
+        // BlazeDemo may reset its data, so signup, check exists before logging in.
+        await api.auth.signup(account)
+        const token = await api.auth.login(account)
+        tokens.set(account.username, token)
+        logger.step(`Log in via API as ${account.username} successfully`)
+        return token
+      })
     },
     { scope: 'worker' },
   ],

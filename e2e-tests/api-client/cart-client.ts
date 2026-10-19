@@ -39,7 +39,7 @@ export class CartClient {
   }
 
   /** Clear the cart for a username (logged in) or a guest cookie string. */
-  async clearCart(cookie: string): Promise<void> {
-    await this.request.post(`${this.apiUrl}/deletecart`, { data: { cookie } })
+  async clearCart(ownerKey: string): Promise<void> {
+    await this.request.post(`${this.apiUrl}/deletecart`, { data: { cookie: ownerKey } })
   }
 }
