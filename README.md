@@ -82,8 +82,8 @@ e2e-tests/
 ├── pages/             # Page objects
 ├── ui-components/     # Reusable components, such as modals
 ├── tests/
-│   ├── cart/          # order.ui.spec.ts + order.testdata.ts
-│   └── login/         # login.ui.spec.ts, login.api.spec.ts + login.testdata.ts
+│   ├── cart/          # cart test scripts
+│   └── login/         # login test scripts
 └── utils/             # env, auth, logger, browser alert helpers
 load-tests/            # k6 load test and its README
 scripts/bootstrap.sh   # One-step local setup

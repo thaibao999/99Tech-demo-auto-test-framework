@@ -1,4 +1,4 @@
-import { Locator, Page } from '@playwright/test'
+import { Locator, Page, expect } from '@playwright/test'
 import { captureBrowserAlert } from '../../utils/browser-alert'
 import { logger } from '../../utils/logger'
 
@@ -19,16 +19,28 @@ export abstract class BaseModal {
     return this.root.locator('.form-group').filter({ hasText: labelText })
   }
 
-  /** Click submit and return native `alert()` text when client-side validation blocks the action. */
-  async submitAndGetAlertMessage(): Promise<string> {
-    const message = await captureBrowserAlert(this.page, async () => {
-      await this.submitButton.click()
-    })
+  /**
+   * Click submit and return native `alert()` text. Use `timeoutMs` when the alert only appears
+   * after a server round trip (e.g. login errors), since the default wait is 10s.
+   */
+  async submitAndGetAlertMessage(timeoutMs?: number): Promise<string> {
+    const message = await captureBrowserAlert(
+      this.page,
+      async () => {
+        await this.submitButton.click()
+      },
+      timeoutMs,
+    )
     logger.step(`Submit form, got browser alert message "${message}" successfully`)
     return message
   }
   async close(): Promise<void> {
     await this.closeButton.click()
     logger.step('Closed modal successfully')
+  }
+
+  async expectClosed(): Promise<void> {
+    await expect(this.root, 'Expect modal to be closed').toBeHidden()
+    logger.step('Verify modal is closed successfully')
   }
 }

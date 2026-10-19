@@ -1,4 +1,4 @@
-import { Locator } from '@playwright/test'
+import { Locator, Request } from '@playwright/test'
 import { BaseModal } from './BaseModal'
 import { logger } from '../../utils/logger'
 
@@ -13,6 +13,29 @@ export class LoginModal extends BaseModal {
     await this.usernameInput.fill(username)
     await this.passwordInput.fill(password)
     logger.step(`Entered credentials on login modal for user "${username}"`)
+  }
+
+  /**
+   * Submit and return the native alert text plus how many POST `/login` requests were sent
+   * while submitting. Use to prove client-side validation blocked the request.
+   */
+  async submitAndCountLoginRequests(): Promise<{
+    alertMessage: string
+    loginRequestCount: number
+  }> {
+    let loginRequestCount = 0
+    const countLoginRequest = (req: Request): void => {
+      if (req.url().includes('/login') && req.method() === 'POST') loginRequestCount++
+    }
+
+    this.page.on('request', countLoginRequest)
+    try {
+      const alertMessage = await this.submitAndGetAlertMessage()
+      logger.step(`Counted ${loginRequestCount} POST /login request(s) during submit`)
+      return { alertMessage, loginRequestCount }
+    } finally {
+      this.page.off('request', countLoginRequest)
+    }
   }
 
   /** Listen for POST `/login` before submit, then wait for the post-auth reload. */

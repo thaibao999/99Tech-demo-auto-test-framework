@@ -1,4 +1,4 @@
-import { APIRequestContext } from '@playwright/test'
+import { APIRequestContext, APIResponse } from '@playwright/test'
 
 export interface Credentials {
   username: string
@@ -32,12 +32,20 @@ export class AuthClient {
   }
 
   /**
+   * Send a raw login request and return the response without parsing it.
+   * Use for negative cases where the server may not reply with JSON (e.g. empty payload).
+   */
+  async sendLoginRequest(user: Credentials): Promise<APIResponse> {
+    return this.request.post(`${this.apiUrl}/login`, {
+      data: { username: user.username, password: this.encodePassword(user.password) },
+    })
+  }
+
+  /**
    * Login for the user and return the token.
    */
   async login(user: Credentials): Promise<string> {
-    const res = await this.request.post(`${this.apiUrl}/login`, {
-      data: { username: user.username, password: this.encodePassword(user.password) },
-    })
+    const res = await this.sendLoginRequest(user)
     const body = await res.json()
     if (typeof body === 'string') {
       return body.replace('Auth_token: ', '')
