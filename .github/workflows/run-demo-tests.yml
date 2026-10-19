@@ -5,7 +5,8 @@ on:
     inputs:
       grep:
         description: Playwright --grep (e.g. @regression, @smoke, @TC-LOGIN-001)
-        required: true
+        required: false
+        default: ""
       load-test:
         description: Also run the k6 login load test
         type: boolean
