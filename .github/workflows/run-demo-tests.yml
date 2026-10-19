@@ -1,0 +1,69 @@
+name: Run Demo Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: Playwright --grep (e.g. @regression, @smoke, @TC-LOGIN-001)
+        required: true
+      load-test:
+        description: Also run the k6 login load test
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: playwright-shared-credentials-${{ github.repository }}-${{ matrix.project }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [api, chromium, firefox]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup test environment
+        uses: ./.github/actions/setup
+        with:
+          install-browser: ${{ matrix.project }}
+      - name: Run tests
+        run: npx playwright test --project=${{ matrix.project }} --grep "$GREP"
+        env:
+          GREP: ${{ inputs.grep }}
+          TEST_ACCOUNT_PASSWORD: ${{ secrets.TEST_ACCOUNT_PASSWORD }}
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 7
+
+  # Only runs when the load-test input is checked.
+  load-test:
+    if: inputs.load-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+      - name: Run load test
+        run: k6 run --summary-export=k6-summary.json load-tests/login.load.js
+        env:
+          TEST_ACCOUNT_PASSWORD: ${{ secrets.TEST_ACCOUNT_PASSWORD }}
+      - name: Upload k6 summary
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: k6-summary
+          path: k6-summary.json
+          retention-days: 7

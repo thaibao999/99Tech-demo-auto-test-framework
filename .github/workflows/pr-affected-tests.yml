@@ -1,0 +1,55 @@
+name: PR Affected Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup test environment
+        uses: ./.github/actions/setup
+      - name: Run lint
+        run: npm run lint
+      - name: Run typecheck
+        run: npm run typecheck
+
+  affected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: playwright-shared-credentials-${{ github.repository }}-${{ matrix.project }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [api, chromium, firefox]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # Full history so Playwright can diff against the PR base.
+          fetch-depth: 0
+      - name: Setup test environment
+        uses: ./.github/actions/setup
+        with:
+          install-browser: ${{ matrix.project }}
+      # Runs spec files that changed, or that import (transitively) a changed file.
+      - name: Run affected tests
+        run: npx playwright test --project=${{ matrix.project }} --only-changed="$BASE_SHA" --pass-with-no-tests
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          TEST_ACCOUNT_PASSWORD: ${{ secrets.TEST_ACCOUNT_PASSWORD }}
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-affected-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 7

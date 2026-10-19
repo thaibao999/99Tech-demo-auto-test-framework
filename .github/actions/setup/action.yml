@@ -1,0 +1,33 @@
+name: Bootstrap test environment
+description: Provision Node.js, npm dependencies, and optionally a Playwright browser for CI test jobs.
+
+inputs:
+  install-browser:
+    description: Playwright browser to install (chromium, firefox, webkit). Leave empty or set to api to skip the browser install.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: package.json
+        cache: npm
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        npm ci
+
+    - name: Install Playwright browser
+      if: inputs.install-browser != '' && inputs.install-browser != 'api'
+      shell: bash
+      env:
+        PLAYWRIGHT_BROWSER: ${{ inputs.install-browser }}
+      run: |
+        set -euo pipefail
+        npx playwright install --with-deps "${PLAYWRIGHT_BROWSER}"
