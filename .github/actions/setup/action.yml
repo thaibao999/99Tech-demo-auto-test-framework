@@ -3,7 +3,7 @@ description: Provision Node.js, npm dependencies, and optionally a Playwright br
 
 inputs:
   install-browser:
-    description: Playwright browser to install (chromium, firefox, webkit). Leave empty to skip the browser install.
+    description: Playwright browser to install (chromium, firefox, webkit). Leave empty or set to api to skip the browser install.
     required: false
     default: ''
 
@@ -24,7 +24,7 @@ runs:
         npm ci
 
     - name: Install Playwright browser
-      if: inputs.install-browser != ''
+      if: inputs.install-browser != '' && inputs.install-browser != 'api'
       shell: bash
       env:
         PLAYWRIGHT_BROWSER: ${{ inputs.install-browser }}
