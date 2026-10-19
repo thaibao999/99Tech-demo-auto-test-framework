@@ -8,31 +8,18 @@ Automated tests for [DemoBlaze](https://www.demoblaze.com/).
 
 ## Setup
 
-Run the bootstrap script on macOS or Linux. It installs everything and creates `.env`:
+Requires Node 26 (pinned in `.nvmrc`). With [nvm](https://github.com/nvm-sh/nvm), run `nvm install && nvm use`.
 
 ```bash
-./scripts/bootstrap.sh
+npm ci
+npx playwright install --with-deps   # browsers; on Linux this also installs OS packages with sudo
+cp .env.example .env                 # then set TEST_ACCOUNT_PASSWORD
 ```
 
-It is safe to re-run. Options: `--skip-browsers`, `--skip-k6`, `--skip-verify`. Run `./scripts/bootstrap.sh -h` for details.
+Or run `./scripts/bootstrap.sh` on macOS or Linux. It checks your Node version, runs the same steps,
+and is safe to re-run. It doesn't install system tools or change your shell profile.
 
-Afterwards, run `nvm use` in the repo. It reads the Node version from `.nvmrc`. The script can't switch
-your current terminal's Node version.
-
-To make Node 26 the default for every new terminal, run `nvm alias default 26`. This also affects
-other projects on your machine.
-
-<details>
-<summary>Manual setup</summary>
-
-```bash
-nvm install 26 && nvm use 26   # Node version from package.json (engines.node)
-npm install
-npx playwright install --with-deps
-cp .env.example .env           # then set TEST_ACCOUNT_PASSWORD
-```
-
-</details>
+k6 is only needed for the load test. See [`load-tests/README.md`](load-tests/README.md).
 
 ## Configuration
 
@@ -86,7 +73,7 @@ e2e-tests/
 │   └── login/         # login test scripts
 └── utils/             # env, auth, logger, browser alert helpers
 load-tests/            # k6 load test and its README
-scripts/bootstrap.sh   # One-step local setup
+scripts/bootstrap.sh   # Local setup script
 .github/workflows/     # CI workflows (see below)
 ```
 

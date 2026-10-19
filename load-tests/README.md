@@ -5,7 +5,7 @@ It runs on its own and does not depend on the Playwright suite.
 
 ## Setup
 
-1. Install k6 (`scripts/bootstrap.sh` does this for you), or manually:
+1. Install k6. On macOS:
 
    ```bash
    brew install k6

@@ -16,6 +16,7 @@ export interface OrderReceipt {
   totalUsd: number
   paymentCard: string
   customerName: string
+  date: string
 }
 
 function readOrderReceipt(panelCopy: string): OrderReceipt {
@@ -23,11 +24,13 @@ function readOrderReceipt(panelCopy: string): OrderReceipt {
   const totalUsdPart = panelCopy.match(/Amount:\s*(\d+)\s*USD/)
   const paymentCardPart = panelCopy.match(/Card Number:\s*([\s\S]*?)Name:/)
   const customerNamePart = panelCopy.match(/Name:\s*([\s\S]*?)Date:/)
+  const datePart = panelCopy.match(/Date:\s*(.*)$/)
   return {
     orderId: orderIdPart?.[1] ?? '',
     totalUsd: totalUsdPart ? parseInt(totalUsdPart[1], 10) : NaN,
     paymentCard: paymentCardPart?.[1]?.trim() ?? '',
     customerName: customerNamePart?.[1]?.trim() ?? '',
+    date: datePart?.[1]?.trim() ?? '',
   }
 }
 
@@ -47,6 +50,12 @@ export class PlaceOrderModal extends BaseModal {
   private readonly purchaseReceiptLine: Locator = this.page
     .getByRole('paragraph')
     .filter({ hasText: /^Id:\s*\d+/ })
+  // SweetAlert adds `visible` after the heading is already showing; clicking OK before that is ignored.
+  private readonly receiptPanel: Locator = this.page.locator('.sweet-alert.visible')
+  private readonly receiptOkButton: Locator = this.page.getByRole('button', {
+    name: 'OK',
+    exact: true,
+  })
 
   async inputCheckoutFields(details: CheckoutFormData): Promise<void> {
     if (details.name !== undefined) await this.nameInput.fill(details.name)
@@ -61,8 +70,15 @@ export class PlaceOrderModal extends BaseModal {
   async confirmPurchase(): Promise<OrderReceipt> {
     await this.submitButton.click()
     await this.purchaseSuccessHeading.waitFor()
+    await this.receiptPanel.waitFor()
     const successMessage = (await this.purchaseReceiptLine.textContent()) ?? ''
     logger.step('Purchase completed; receipt text captured from success overlay')
     return readOrderReceipt(successMessage)
+  }
+
+  /** Dismiss the purchase receipt with OK. The site then redirects to the Home page. */
+  async closeReceipt(): Promise<void> {
+    await this.receiptOkButton.click()
+    logger.step('Close purchase receipt with OK successfully')
   }
 }

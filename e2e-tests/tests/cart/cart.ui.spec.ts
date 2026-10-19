@@ -1,7 +1,15 @@
 import { test, expect } from '@@e2e-tests/fixtures/base-test'
 import { ProductPage } from '@@e2e-tests/pages/ProductPage'
 import { CartPage } from '@@e2e-tests/pages/CartPage'
-import { CART_UI_ACCOUNT, NOKIA_LUMIA_1520, SAMSUNG_GALAXY_S6, SONY_VAIO_I5 } from './cart.testdata'
+import { HomePage } from '@@e2e-tests/pages/HomePage'
+import { PlaceOrderModal } from '@@e2e-tests/ui-components/modal/PlaceOrderModal'
+import {
+  CART_UI_ACCOUNT,
+  NOKIA_LUMIA_1520,
+  SAMSUNG_GALAXY_S6,
+  SONY_VAIO_I5,
+  VALID_CHECKOUT,
+} from './cart.testdata'
 
 test.describe('Cart — UI', () => {
   test.use({ account: CART_UI_ACCOUNT, authenticated: true })
@@ -62,6 +70,54 @@ test.describe('Cart — UI', () => {
           expect.arrayContaining(products.map(({ title, price }) => ({ title, price }))),
         )
         await cartPage.expectTotal(1970)
+      })
+    },
+  )
+
+  test(
+    'Successful purchase with all fields',
+    { tag: ['@TC-CART-015', '@smoke'] },
+    async ({ page }) => {
+      const productPage = new ProductPage(page)
+      const cartPage = new CartPage(page)
+      const placeOrderModal = new PlaceOrderModal(page)
+      const homePage = new HomePage(page)
+
+      await test.step('1. Add Samsung galaxy s6 to the cart', async () => {
+        await productPage.goto(SAMSUNG_GALAXY_S6.id)
+        await productPage.addToCart()
+      })
+
+      await test.step('2. Open Cart and click Place Order', async () => {
+        await cartPage.goto()
+        await cartPage.expectRowCount(1)
+        await cartPage.expectTotal(SAMSUNG_GALAXY_S6.price)
+        await cartPage.openPlaceOrder()
+      })
+
+      await test.step('3. Fill all fields with valid test data', async () => {
+        await placeOrderModal.inputCheckoutFields(VALID_CHECKOUT)
+      })
+
+      await test.step('4. Click Purchase and verify the receipt', async () => {
+        const receipt = await placeOrderModal.confirmPurchase()
+
+        expect(receipt.orderId, 'Expect receipt to show a numeric order Id').toMatch(/^\d+$/)
+        expect(receipt.totalUsd, 'Expect receipt amount to equal cart total').toBe(
+          SAMSUNG_GALAXY_S6.price,
+        )
+        expect(receipt.paymentCard, 'Expect receipt to show the card number entered').toBe(
+          VALID_CHECKOUT.card,
+        )
+        expect(receipt.customerName, 'Expect receipt to show the name entered').toBe(
+          VALID_CHECKOUT.name,
+        )
+        expect(receipt.date, 'Expect receipt to show a purchase date').not.toBe('')
+      })
+
+      await test.step('5. Click OK and verify redirect to Home', async () => {
+        await placeOrderModal.closeReceipt()
+        await homePage.expectOnHomePage()
       })
     },
   )
