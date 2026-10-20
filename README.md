@@ -17,9 +17,10 @@ Automated tests for [DemoBlaze](https://www.demoblaze.com/).
 
 From the project root:
 
-1. Run `./scripts/bootstrap.sh`. It installs dependencies and browsers, and creates `.env`. Then set `TEST_ACCOUNT_PASSWORD` in `.env`.
-2. Run `npm test` to execute all demo scripts.
-3. Run `npx playwright show-report` to open the HTML report.
+1. If no node install, run `nvm install && nvm use` to install and use correct node version.
+2. Run `./scripts/bootstrap.sh`. It installs dependencies and browsers, and creates `.env`. Then set `TEST_ACCOUNT_PASSWORD` in `.env`.
+3. Run `npm test` to execute all demo scripts.
+4. Run `npx playwright show-report` to open the HTML report.
 
 See [running tests](#running-tests) for the full suite, API tests, UI tests or a specific test case.
 
