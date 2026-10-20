@@ -2,9 +2,14 @@
 
 Automated tests for [DemoBlaze](https://www.demoblaze.com/).
 
-- **Playwright + TypeScript:** UI tests in Chromium, Firefox and Safari, plus API tests that don't use a browser.
-- **k6:** a separate API load test (demo with login endpoints), in [`load-tests/`](load-tests/README.md).
-- **Tags:** `@smoke`, `@regression`, and per-case IDs such as `@TC-LOGIN-001`.
+## Features
+
+- **UI and API testing:** Playwright + TypeScript across Chromium, Firefox and WebKit, with browser-free API tests.
+- **Reusable test architecture:** page objects, UI components, API clients, shared fixtures and API-based authentication.
+- **Flexible execution:** environment profiles plus `@smoke`, `@regression` and per-case tags such as `@TC-LOGIN-001`.
+- **Diagnostics and reports:** HTML, list and JUnit reports, with traces, screenshots and videos retained on failure.
+- **Pre-commit checks:** Husky and lint-staged automatically run ESLint on staged TypeScript and JavaScript files.
+- **Performance and CI:** k6 load testing, code-quality checks and pull-request workflows that run only affected tests.
 
 ## Setup
 
