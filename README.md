@@ -11,6 +11,16 @@ Automated tests for [DemoBlaze](https://www.demoblaze.com/).
 - **Pre-commit checks:** Husky and lint-staged automatically run ESLint on staged TypeScript and JavaScript files.
 - **Performance and CI:** k6 load testing, code-quality checks and pull-request workflows that run only affected tests.
 
+## Execute the demo scripts
+
+From the project root:
+
+1. Run `./scripts/bootstrap.sh`. It installs dependencies and browsers, and creates `.env`. Then set `TEST_ACCOUNT_PASSWORD` in `.env`.
+2. Run `npm test` to execute the all demo scripts.
+3. Run `npx playwright show-report` to open the HTML report.
+
+Refer the commands in [running tests](#running-tests) to run the full suite, API tests, UI tests or a specific test case.
+
 ## Setup
 
 Requires Node 26 (pinned in `.nvmrc`). With [nvm](https://github.com/nvm-sh/nvm), run `nvm install && nvm use`.
