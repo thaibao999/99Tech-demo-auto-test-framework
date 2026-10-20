@@ -13,13 +13,25 @@ Automated tests for [DemoBlaze](https://www.demoblaze.com/).
 
 ## Execute the demo scripts
 
+### Run locally
+
 From the project root:
 
 1. Run `./scripts/bootstrap.sh`. It installs dependencies and browsers, and creates `.env`. Then set `TEST_ACCOUNT_PASSWORD` in `.env`.
-2. Run `npm test` to execute the all demo scripts.
+2. Run `npm test` to execute all demo scripts.
 3. Run `npx playwright show-report` to open the HTML report.
 
-Refer the commands in [running tests](#running-tests) to run the full suite, API tests, UI tests or a specific test case.
+See [running tests](#running-tests) for the full suite, API tests, UI tests or a specific test case.
+
+### Run on CI
+
+1. Open the **Run Demo Tests** workflow in the GitHub Actions tab (`run-demo-tests.yml`).
+2. Click **Run workflow** and choose the branch.
+3. Enter a `grep` value such as `@regression`, `@smoke` or `@TC-LOGIN-001`. Leave it empty to run everything.
+4. Tick **load-test** to also run the k6 load test.
+5. When the run finishes, download the Playwright report and k6 summary from the run's artifacts.
+
+Pull requests also run the affected tests automatically (see [CI](#ci)).
 
 ## Setup
 
