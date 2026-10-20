@@ -93,7 +93,9 @@ repository secret of the same name.
 ## Affected-test selection
 
 On pull requests, Playwright runs `--only-changed=<base sha>`. It runs every spec that changed, or that
-imports a changed file, directly or indirectly. To check locally:
+imports a changed file, directly or indirectly. Example PR: https://github.com/thaibao999/99Tech-demo-auto-test-framework/pull/1
+
+To check locally:
 
 ```bash
 npx playwright test --only-changed=origin/main
