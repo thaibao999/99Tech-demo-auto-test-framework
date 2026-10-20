@@ -33,11 +33,13 @@ export default defineConfig({
       name: 'firefox',
       testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Firefox'] },
+      default: false,
     },
     {
       name: 'webkit',
       testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
+      default: false,
     },
   ],
 })
