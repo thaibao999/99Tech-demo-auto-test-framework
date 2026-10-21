@@ -2,8 +2,7 @@ import { Locator, expect } from '@playwright/test'
 import { logger } from '../../utils/logger'
 
 /**
- * Shared wrapper for HTML tables. Columns are found by their header text, so tests keep working
- * when a column is added or moved. Pass the `<table>` element as `root`.
+ * Shared wrapper for HTML tables. Pass the `<table>` element as `root`.
  */
 export class BaseTable {
   private readonly rows: Locator
@@ -20,10 +19,15 @@ export class BaseTable {
     return headers.map((text) => text.trim())
   }
 
+  /** Body cells of the column with this header, one per row. Use with web-first assertions. */
+  async column(header: string): Promise<Locator> {
+    const index = await this.columnIndex(header)
+    return this.root.page().locator('td').nth(index).within(this.rows)
+  }
+
   /** Text of every body cell in the column with this header, top to bottom. */
   async getColumnValues(header: string): Promise<string[]> {
-    const index = await this.columnIndex(header)
-    const cells = await this.rows.locator(`td:nth-child(${index + 1})`).allTextContents()
+    const cells = await (await this.column(header)).allTextContents()
     return cells.map((text) => text.trim())
   }
 

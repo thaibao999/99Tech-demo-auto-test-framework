@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
-import { BASE_URL } from './e2e-tests/utils/env'
+import { API_URL, BASE_URL, ENVIRONMENT } from './e2e-tests/utils/env'
+import { logger } from './e2e-tests/utils/logger'
+
+// The config is re-evaluated in every worker; log the target only from the main process.
+if (!process.env.TEST_WORKER_INDEX) {
+  logger.info(`ENVIRONMENT=${ENVIRONMENT} BASE_URL=${BASE_URL} API_URL=${API_URL}`)
+}
 
 export default defineConfig({
   testDir: './e2e-tests/tests',

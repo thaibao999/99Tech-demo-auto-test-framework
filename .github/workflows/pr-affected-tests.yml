@@ -6,6 +6,11 @@ on:
 permissions:
   contents: read
 
+# Cancel older runs of the same PR when it is updated; runs of other PRs are unaffected.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   typecheck:
     name: Lint and Typecheck
@@ -24,6 +29,7 @@ jobs:
   affected:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Shared credentials: don't cancel; runs queue across PRs.
     concurrency:
       group: playwright-shared-credentials-${{ github.repository }}-${{ matrix.project }}
       cancel-in-progress: false
@@ -35,7 +41,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # Full history so Playwright can diff against the PR base.
           fetch-depth: 0
       - name: Setup test environment
         uses: ./.github/actions/setup
@@ -46,6 +51,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.project }} --only-changed="$BASE_SHA" --pass-with-no-tests
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ENVIRONMENT: qa
           TEST_ACCOUNT_PASSWORD: ${{ secrets.TEST_ACCOUNT_PASSWORD }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7

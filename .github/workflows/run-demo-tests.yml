@@ -12,6 +12,9 @@ on:
         type: boolean
         required: false
         default: false
+  # schedule run
+  schedule:
+    - cron: '0 0 * * *'
 
 permissions:
   contents: read
@@ -38,6 +41,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.project }} --grep "$GREP"
         env:
           GREP: ${{ inputs.grep }}
+          ENVIRONMENT: qa
           TEST_ACCOUNT_PASSWORD: ${{ secrets.TEST_ACCOUNT_PASSWORD }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
