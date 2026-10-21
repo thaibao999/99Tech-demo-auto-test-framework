@@ -4,7 +4,7 @@ import { captureBrowserAlert } from '../utils/browser-alert'
 import { logger } from '../utils/logger'
 
 export class ProductPage extends BasePage {
-  private readonly productTitle: Locator = this.page.locator('.name')
+  private readonly productTitle: Locator = this.page.getByRole('heading', { level: 2 })
   private readonly addToCartLink: Locator = this.page.getByRole('link', { name: 'Add to cart' })
 
   async goto(productId: number): Promise<void> {

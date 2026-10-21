@@ -70,8 +70,9 @@ npm run test:smoke                         # @smoke only
 npm run test:regression                    # @regression only
 npm run test:api                           # API tests (no browser)
 npm run test:ui                            # UI tests in chromium, firefox and webkit
-npx playwright test --grep @TC-LOGIN-001         # one case by its ID
+npx playwright test --grep @TC-LOGIN-001   # one case by its ID
 npx playwright test --project=chromium --headed
+npx playwright test --project="*"          # Run all projects
 ENVIRONMENT=staging npm run test:smoke     # run against another environment
 ```
 

@@ -9,7 +9,8 @@ export interface CartItem {
 }
 
 export class CartPage extends BasePage {
-  private readonly cartTable: BaseTable = new BaseTable(this.page.locator('table:has(#tbodyid)'))
+  private readonly cartTable: BaseTable = new BaseTable(this.page.getByRole('table'))
+  // No accessible name ties #totalp to its "Total" heading, so the id is the only stable hook.
   private readonly totalAmount: Locator = this.page.locator('#totalp')
   private readonly placeOrderButton: Locator = this.page.getByRole('button', {
     name: 'Place Order',
@@ -24,11 +25,16 @@ export class CartPage extends BasePage {
     await this.cartTable.expectRowCount(expectedCount, timeout)
   }
 
-  /** Title and price of every row, in table order. Call waitForRowCount first so all rows have loaded. */
-  async getItems(): Promise<CartItem[]> {
-    const rows = await this.cartTable.getRows(['Title', 'Price'])
-    logger.step(`Read ${rows.length} cart row(s) successfully`)
-    return rows.map((row) => ({ title: row.Title, price: Number(row.Price) }))
+  /** Rows load in no fixed order, so poll until the cart holds exactly these items in any order. */
+  async expectItems(expectedItems: CartItem[], timeout: number = 10000): Promise<void> {
+    const byTitle = (a: CartItem, b: CartItem): number => a.title.localeCompare(b.title)
+    await expect
+      .poll(async () => (await this.readItems()).sort(byTitle), {
+        message: `Expect cart to list ${expectedItems.map((item) => item.title).join(', ')}`,
+        timeout,
+      })
+      .toEqual([...expectedItems].sort(byTitle))
+    logger.step(`Verify cart lists ${expectedItems.length} item(s) successfully`)
   }
 
   /** The Total is filled in as rows load, so poll until it shows the expected sum. */
@@ -43,5 +49,10 @@ export class CartPage extends BasePage {
   async openPlaceOrder(): Promise<void> {
     await this.placeOrderButton.click()
     logger.step('Open Place Order modal successfully')
+  }
+
+  private async readItems(): Promise<CartItem[]> {
+    const rows = await this.cartTable.getRows(['Title', 'Price'])
+    return rows.map((row) => ({ title: row.Title, price: Number(row.Price) }))
   }
 }
