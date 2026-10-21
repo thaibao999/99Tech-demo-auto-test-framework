@@ -1,5 +1,6 @@
 import { test as base } from '@playwright/test'
 import { ApiClients, createApiClients } from '@@e2e-tests/api-client/create-api-clients'
+import { Product } from '@@e2e-tests/api-client/product-client'
 import { API_URL } from '@@e2e-tests/utils/env'
 import { addSessionCookie, Credentials } from '@@e2e-tests/utils/auth'
 import { logger, Logger } from '@@e2e-tests/utils/logger'
@@ -33,6 +34,11 @@ interface WorkerFixtures {
    * Lives for one worker, so a failed test's new worker logs in again.
    */
   getSessionToken: (account: Credentials) => Promise<string>
+  /**
+   * Returns `count` distinct products from the live catalog, so tests don't break when the store's products change.
+   * The catalog is fetched once per worker. Throws if the store lists fewer than `count` products.
+   */
+  pickProducts: (count: number) => Promise<Product[]>
 }
 
 export const test = base.extend<TestOptions & TestFixtures, WorkerFixtures>({
@@ -82,6 +88,21 @@ export const test = base.extend<TestOptions & TestFixtures, WorkerFixtures>({
     async ({}, use, workerInfo) => {
       const suffix = workerInfo.project.name
       await use((account) => ({ ...account, username: `${account.username}_${suffix}` }))
+    },
+    { scope: 'worker' },
+  ],
+
+  pickProducts: [
+    async ({ api }, use) => {
+      let catalog: Promise<Product[]> | undefined
+      await use(async (count) => {
+        catalog ??= api.product.listProducts()
+        const products = await catalog
+        if (products.length < count) {
+          throw new Error(`Need ${count} product(s) but the store lists only ${products.length}`)
+        }
+        return products.slice(0, count)
+      })
     },
     { scope: 'worker' },
   ],

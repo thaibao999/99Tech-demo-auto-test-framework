@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import { test, expect } from '@@e2e-tests/fixtures/base-test'
-import { CART_API_ACCOUNT, SAMSUNG_GALAXY_S6 } from './cart.testdata'
+import { CART_API_ACCOUNT } from './cart.testdata'
 
 test.describe('Cart via API', () => {
   test.use({ account: CART_API_ACCOUNT })
@@ -24,18 +24,20 @@ test.describe('Cart via API', () => {
   test(
     'Add single product to cart (logged in)',
     { tag: ['@TC-CART-001', '@smoke'] },
-    async ({ api, authToken }) => {
-      await test.step('1. Add Samsung galaxy s6 to the cart', async () => {
-        const res = await api.cart.addToCart(authToken, SAMSUNG_GALAXY_S6.id, true)
+    async ({ api, authToken, pickProducts }) => {
+      const [product] = await pickProducts(1)
+
+      await test.step(`1. Add ${product.title} to the cart`, async () => {
+        const res = await api.cart.addToCart(authToken, product.id, true)
         expect(res.ok(), 'Expect /addtocart to succeed for a logged-in user').toBe(true)
       })
 
-      await test.step('2. Open the cart and verify it lists only Samsung galaxy s6', async () => {
+      await test.step(`2. Open the cart and verify it lists only ${product.title}`, async () => {
         const items = await api.cart.viewCart(authToken, true)
         expect(
           items.map((item) => item.prod_id),
-          'Expect cart to list only Samsung galaxy s6',
-        ).toEqual([SAMSUNG_GALAXY_S6.id])
+          `Expect cart to list only ${product.title}`,
+        ).toEqual([product.id])
       })
     },
   )
@@ -43,16 +45,17 @@ test.describe('Cart via API', () => {
   test(
     'Add product to cart as guest',
     { tag: ['@TC-CART-002', '@regression'] },
-    async ({ api }) => {
+    async ({ api, pickProducts }) => {
+      const [product] = await pickProducts(1)
       // A unique key gives this test its own empty guest cart.
       const cookie = `guest_cart_${randomUUID()}`
       guestCartKey = cookie
 
-      await test.step('1. Add Samsung galaxy s6 as a guest', async () => {
+      await test.step(`1. Add ${product.title} as a guest`, async () => {
         const before = await api.cart.viewCart(cookie, false)
         expect(before, 'Expect guest cart to be empty before adding').toEqual([])
 
-        const res = await api.cart.addToCart(cookie, SAMSUNG_GALAXY_S6.id, false)
+        const res = await api.cart.addToCart(cookie, product.id, false)
         expect(res.ok(), 'Expect /addtocart to succeed for a guest').toBe(true)
       })
 
@@ -60,8 +63,8 @@ test.describe('Cart via API', () => {
         const items = await api.cart.viewCart(cookie, false)
         expect(
           items.map((item) => item.prod_id),
-          'Expect guest cart to list only Samsung galaxy s6',
-        ).toEqual([SAMSUNG_GALAXY_S6.id])
+          `Expect guest cart to list only ${product.title}`,
+        ).toEqual([product.id])
       })
     },
   )

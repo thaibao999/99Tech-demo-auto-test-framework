@@ -1,4 +1,4 @@
-/** Valid values for TEST_TARGET (shell / CI). */
+/** Valid values for ENVIRONMENT (shell / CI). */
 export const ENVIRONMENTS = ['dev', 'qa', 'staging', 'production'] as const
 export type Environment = (typeof ENVIRONMENTS)[number]
 
