@@ -3,6 +3,7 @@ import { BasePage } from './BasePage'
 import { BaseTable } from '@@e2e-tests/ui-components/table/BaseTable'
 import { logger } from '@@e2e-tests/utils/logger'
 
+// Test update something in this page will only trigger spec files using this page object.
 export interface CartItem {
   title: string
   price: number
